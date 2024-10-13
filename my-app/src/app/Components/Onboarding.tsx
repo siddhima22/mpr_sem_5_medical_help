@@ -112,7 +112,7 @@ export default function Onboarding() {
             type="submit"
             className="w-full py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Submit
+            Sign In
           </button>
         </form>
       </div>

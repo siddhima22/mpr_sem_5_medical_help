@@ -10,12 +10,12 @@ export default function Home() {
   return (
     <div>
 
-      {/* <Landing/>
+      {/* 
       <PrescriptionOCR/> 
       <Onboarding/>
-
+       <RecieptOCR/>
       */}
-            <RecieptOCR/>
+          <Landing/> 
     </div>
   );
 }
