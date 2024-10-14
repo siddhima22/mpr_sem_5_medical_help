@@ -1,31 +1,35 @@
-"use client"
+"use client";
 import { useState } from 'react';
 
 export default function UploadPrescription() {
   const [details, setDetails] = useState(null);
   const [calendarDate, setCalendarDate] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
+  const defaultPrescription = {
+    medicine: "Amoxicillin 500mg cap #21",
+    dosage: "1 cap 6 times a day for seven days",
+    imageUrl: "https://api.watsons.com.ph/medias/prdthumb-front-10000367.jpg?context=bWFzdGVyfGltYWdlc3wyNzY3NzB8aW1hZ2UvanBlZ3xoYzcvaGNiLzExMjI0NjE5Njc5Nzc0L1dUQ1BILTEwMDAwMzY3LWZyb250LmpwZ3wxMTQ0NDhkZDAzNGYzZGE4YTQ2MzY3OTYzY2Y0ODZhZjc5N2JlZjI1YjM3ODgxZGM4YmVjZDAzYjRmOWU2Zjlj", // Replace with the actual image URL
+  };
 
-  const handleSubmit = async (event:any) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
 
-    const imageInput = document.getElementById('image');
+    const imageInput = document.getElementById('image') as HTMLInputElement;
     const file = imageInput.files[0];
 
-    if (!file) {
-      alert('Please select an image file.');
-      return;
-    }
+    // Open modal directly without OCR since we have default data
+    setIsModalOpen(true);
+    setDetails(`${defaultPrescription.medicine}, ${defaultPrescription.dosage}`);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('api-key', 'TEST'); // Replace with your actual API key
-    formData.append('recognizer', 'auto');
-    formData.append('ref_no', 'oct_python_123');
-
+    // Send default prescription data to Gemini AI
     try {
-      const response = await fetch('https://ocr.asprise.com/api/v1/receipt', {
+      const response = await fetch('https://gemini.api.url', { // Replace with the actual Gemini API URL
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer YOUR_GEMINI_API_KEY', // Replace with your actual API key
+        },
+        body: JSON.stringify(defaultPrescription),
       });
 
       if (!response.ok) {
@@ -33,27 +37,18 @@ export default function UploadPrescription() {
       }
 
       const responseData = await response.json();
+      // Assuming responseData has a summary and recommendations
+      const summary = responseData.summary;
+      const recommendations = responseData.recommendations;
 
-      // Display details
-      const ocrText = responseData.receipts[0].ocr_text;
-      setDetails(ocrText);
+      // You can append the summary and recommendations to details
+      setDetails(prevDetails => `${prevDetails}\n\nSummary: ${summary}\nRecommendations: ${recommendations}`);
 
-      // Extract date for calendar (for demonstration, assuming date is included in OCR text)
-      const extractedDate = extractDateFromText(ocrText);
-      if (extractedDate) {
-        setCalendarDate(extractedDate);
-      }
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred while processing the request.');
     }
   };
-
-  function extractDateFromText(text:any) {
-    const datePattern = /\b(\d{2}-\d{2}-\d{2})\b/; // Adjust regex based on expected date format
-    const match = text.match(datePattern);
-    return match ? match[0] : null;
-  }
 
   return (
     <div className="flex flex-col items-center bg-teal-900 text-white min-h-screen p-6">
@@ -110,10 +105,22 @@ export default function UploadPrescription() {
         </div>
       </div>
 
-      {details && (
-        <div id="detailsCard" className="bg-teal-100 text-black p-6 rounded-lg shadow-lg mt-8 w-full max-w-xl">
-          <div className="font-semibold mb-4">Prescription Details</div>
-          <pre className="bg-gray-100 p-4 rounded-lg">{details}</pre>
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white text-black p-6 rounded-lg shadow-lg max-w-lg w-full max-h-[80vh] overflow-auto">
+            <button
+              className="text-red-500 font-bold float-right"
+              onClick={() => setIsModalOpen(false)}
+            >
+              X
+            </button>
+            <h2 className="font-semibold text-lg mb-4">Prescription Summary</h2>
+            <img src={defaultPrescription.imageUrl} alt="Medicine" className=" m-14 w-48 h-48 object-cover rounded-lg mb-4" />
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap">
+              {details}
+            </pre>
+          </div>
         </div>
       )}
     </div>
